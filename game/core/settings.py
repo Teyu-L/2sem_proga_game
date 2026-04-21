@@ -1,3 +1,4 @@
+import pygame
 WIDTH = 720  # ширина игрового окна
 HEIGHT = 480 # высота игрового окна
 FPS = 30
@@ -7,3 +8,6 @@ WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
 BLUE = (0, 0, 255)
+
+clock = pygame.time.Clock()
+dt = clock.tick(FPS) / 1000.0  # время между кадрами в секундах

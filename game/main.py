@@ -9,28 +9,30 @@ pygame.mixer.init()
 screen = pygame.display.set_mode((core.settings.WIDTH, core.settings.HEIGHT))
 pygame.display.set_caption("Wither Game")
 clock = pygame.time.Clock()
-all_sprites = pygame.sprite.Group()
 
+# Создание спрайтов
+all_sprites = pygame.sprite.Group()
 player_view = views.player.Player_view()
-all_sprites = pygame.sprite.Group()
 
+all_sprites.add(player_view)
 
 running = True
 while running:
+    
     # Держим цикл на правильной скорости
     clock.tick(core.settings.FPS)
     # Ввод процесса (события)
-
-    all_sprites.update()
-
     
     for event in pygame.event.get():
         # check for closing window
         if event.type == pygame.QUIT:
             running = False
 
+    all_sprites.update()
+    
+    # Отрисовка
+    screen.fill(core.settings.BLACK)
+    all_sprites.draw(screen)
+    pygame.display.flip()
 
-screen.fill(core.settings.BLACK)
-
-pygame.display.flip()
 pygame.quit()
