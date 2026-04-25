@@ -1,7 +1,8 @@
 import pygame
 import core.settings
-import models
+from models import player_mod
 import views.player
+from controller import player_con
 pygame.init()
 pygame.mixer.init()
 
@@ -16,15 +17,20 @@ player_view = views.player.Player_view()
 
 all_sprites.add(player_view)
 
+
+player_model = player_mod.Player_Model()
+player_controller = player_con.Player_Controller(player_model, player_view)
+
 running = True
 while running:
-    
-    # Держим цикл на правильной скорости
     clock.tick(core.settings.FPS)
-    # Ввод процесса (события)
+
+    keys = pygame.key.get_pressed()
+    mouse_buttons = pygame.mouse.get_pressed()
+    player_controller.handle_input(keys, core.settings.dt)
+
     
     for event in pygame.event.get():
-        # check for closing window
         if event.type == pygame.QUIT:
             running = False
 
