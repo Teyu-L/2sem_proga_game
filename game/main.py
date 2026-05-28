@@ -23,13 +23,11 @@ player_controller = player_con.Player_Controller(player_model, player_view)
 
 running = True
 while running:
-    clock.tick(core.settings.FPS)
+    dt = clock.tick(core.settings.FPS) / 1000.0
 
     keys = pygame.key.get_pressed()
-    mouse_buttons = pygame.mouse.get_pressed()
-    player_controller.handle_input(keys, core.settings.dt)
+    player_controller.handle_input(keys, dt)
 
-    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
