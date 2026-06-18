@@ -6,7 +6,7 @@ class Player_Controller:
         self.model = model
         self.view = view
 
-    def handle_input(self, keys, dt):
+    def handle_input(self, keys, dt, obstacles=None):
         speed = 200
         dx = 0
         dy = 0
@@ -21,7 +21,7 @@ class Player_Controller:
             dx += speed
 
         self.model.move(dx, dy)
-        self.model.update(dt)
+        self.model.update(dt, obstacles)
 
         self.view.rect.centerx = self.model.X
         self.view.rect.centery = self.model.Y
