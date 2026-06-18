@@ -20,17 +20,16 @@ def main():
     pygame.display.set_caption("Wither: the potion trip")
     clock = pygame.time.Clock()
 
-    # 1. Генерируем подземелье
-    level_model = Level_Model(map_width=2000, map_height=2000)
+    # 1. Генерируем уровень (подземелье и тайловую карту)
+    level_model = Level_Model()
     level_view = Level_View(level_model)
 
     # 2. Инициализируем игрока
     player_model = Player_Model()
     
-    # Спавним игрока строго в центре первой попавшейся случайной комнаты
-    start_room = level_model.get_random_room()
-    if start_room:
-        player_model.X, player_model.Y = start_room.center
+    # Спавним игрока на случайной проходимой позиции
+    spawn_pos = level_model.get_random_walkable_position()
+    player_model.X, player_model.Y = spawn_pos
 
     player_view = Player_View(player_model.X, player_model.Y)
     player_controller = Player_Controller(player_model, player_view)
@@ -41,6 +40,9 @@ def main():
     camera.x = player_model.X - WIDTH / 2
     camera.y = player_model.Y - HEIGHT / 2
 
+    # 4. Опционально: включаем отрисовку сетки для отладки
+    # level_view.set_show_grid(True)
+
     running = True
     while running:
         dt = clock.tick(60) / 1000.0
@@ -48,11 +50,14 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            # Для отладки: нажми G чтобы включить/отключить сетку
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_g:
+                level_view.tilemap_view.show_grid = not level_view.tilemap_view.show_grid
 
         keys = pygame.key.get_pressed()
 
-        # Обновление логики (obstacles пока None, поэтому ходим сквозь стены)
-        player_controller.handle_input(keys, dt, obstacles=None)
+        # Обновление логики с проверкой коллизий на тайловой карте
+        player_controller.handle_input(keys, dt, level_model.tilemap)
 
         # Обновление камеры (плавно догоняет игрока)
         camera.update(player_model.X, player_model.Y, level_model.map_width, level_model.map_height)

@@ -4,6 +4,7 @@ import pygame
 class BSPNode:
     """Узел дерева разбиения."""
     def __init__(self, x, y, width, height):
+        # Rect теперь в тайловых координатах
         self.rect = pygame.Rect(x, y, width, height)
         self.left = None
         self.right = None
@@ -12,11 +13,13 @@ class BSPNode:
 class BSPGenerator:
     """
     Генератор подземелий с использованием алгоритма Binary Space Partitioning (BSP).
+    Работает в тайловых координатах.
     """
-    def __init__(self, map_width, map_height, min_room_size, iterations):
+    def __init__(self, map_width, map_height, min_room_size, corridor_width, iterations):
         self.map_width = map_width
         self.map_height = map_height
         self.min_room_size = min_room_size
+        self.corridor_width = corridor_width
         self.iterations = iterations
         self.rooms = []
         self.corridors = []
@@ -29,13 +32,14 @@ class BSPGenerator:
         # 1. Сплиттинг (Разбиение пространства)
         for _ in range(self.iterations):
             new_leaves = []
+            # Проходимся по всем листьям и пытаемся их разбить
             for leaf in leaves:
                 if leaf.left is None and leaf.right is None:
-                    # Пытаемся разбить узел на два
                     if self._split_node(leaf):
                         new_leaves.append(leaf.left)
                         new_leaves.append(leaf.right)
                     else:
+                        # Если разбить не удалось, оставляем как есть
                         new_leaves.append(leaf)
             leaves = new_leaves
 
@@ -58,11 +62,12 @@ class BSPGenerator:
         elif node.rect.height > node.rect.width and node.rect.height / node.rect.width >= 1.25:
             split_horizontally = True
 
-        max_size = (node.rect.height if split_horizontally else node.rect.width) - self.min_room_size
-        
-        if max_size <= self.min_room_size:
-            return False  # Узел слишком мал для дальнейшего разбиения
+        # Проверяем, достаточно ли велик узел для разбиения
+        dim = node.rect.height if split_horizontally else node.rect.width
+        if dim < self.min_room_size * 2:
+            return False # Слишком мал для создания двух дочерних узлов с min_room_size
 
+        max_size = dim - self.min_room_size
         split_pos = random.randint(self.min_room_size, max_size)
 
         if split_horizontally:
@@ -85,40 +90,46 @@ class BSPGenerator:
                 return random.choice([left_room, right_room])
             return left_room or right_room
         else:
-            # Узел является "листом" - создаем в нем комнату с небольшими отступами от границ (стен)
-            w = random.randint(max(3, int(node.rect.width * 0.6)), max(3, node.rect.width - 2))
-            h = random.randint(max(3, int(node.rect.height * 0.6)), max(3, node.rect.height - 2))
-            
-            x = node.rect.x + random.randint(1, max(1, node.rect.width - w - 1))
-            y = node.rect.y + random.randint(1, max(1, node.rect.height - h - 1))
-            
+            # Узел является "листом" - создаем в нем комнату
+            margin = 1  # 1-тайловый отступ от границ раздела
+            min_dim = 3 # Минимальный размер комнаты в тайлах
+
+            # Убедимся, что раздел достаточно велик для минимальной комнаты + отступов
+            if node.rect.width < min_dim + 2 * margin or node.rect.height < min_dim + 2 * margin:
+                return None
+
+            # Размеры комнаты
+            min_w = max(min_dim, int(node.rect.width * 0.5))
+            min_h = max(min_dim, int(node.rect.height * 0.5))
+            max_w = node.rect.width - 2 * margin
+            max_h = node.rect.height - 2 * margin
+
+            w = random.randint(min_w, max_w) if min_w <= max_w else max_w
+            h = random.randint(min_h, max_h) if min_h <= max_h else max_h
+
+            # Положение комнаты
+            x = node.rect.x + random.randint(margin, node.rect.width - w - margin)
+            y = node.rect.y + random.randint(margin, node.rect.height - h - margin)
+
             room = pygame.Rect(x, y, w, h)
             self.rooms.append(room)
             return room
 
     def _create_corridor(self, room1, room2):
-        """Создает аккуратные Г-образные коридоры из трех частей (2 отрезка и 1 угловой квадрат)."""
-        x1, y1 = room1.center
-        x2, y2 = room2.center
-        corridor_width = 30 # Ширина коридора (можно настроить в зависимости от размера спрайта игрока)
+        """Создает L-образные коридоры в тайловых координатах."""
+        x1, y1 = room1.centerx, room1.centery
+        x2, y2 = room2.centerx, room2.centery
+        corridor_w = self.corridor_width
 
         if random.choice([True, False]):
-            # Горизонтальный, потом вертикальный. Поворот в (x2, y1).
-            corner_pos = (x2 - corridor_width // 2, y1 - corridor_width // 2)
-            
-            # Горизонтальный отрезок
-            self.corridors.append(pygame.Rect(min(x1, x2), y1 - corridor_width // 2, abs(x1 - x2), corridor_width))
-            # Вертикальный отрезок
-            self.corridors.append(pygame.Rect(x2 - corridor_width // 2, min(y1, y2), corridor_width, abs(y1 - y2)))
-            # Угловой квадрат для соединения
-            self.corridors.append(pygame.Rect(corner_pos[0], corner_pos[1], corridor_width, corridor_width))
+            # Вариант 1: Горизонтальный → Вертикальный
+            if x1 != x2:
+                self.corridors.append(pygame.Rect(min(x1, x2), y1 - corridor_w // 2, abs(x1 - x2) + 1, corridor_w))
+            if y1 != y2:
+                self.corridors.append(pygame.Rect(x2 - corridor_w // 2, min(y1, y2), corridor_w, abs(y1 - y2) + 1))
         else:
-            # Вертикальный, потом горизонтальный. Поворот в (x1, y2).
-            corner_pos = (x1 - corridor_width // 2, y2 - corridor_width // 2)
-
-            # Вертикальный отрезок
-            self.corridors.append(pygame.Rect(x1 - corridor_width // 2, min(y1, y2), corridor_width, abs(y1 - y2)))
-            # Горизонтальный отрезок
-            self.corridors.append(pygame.Rect(min(x1, x2), y2 - corridor_width // 2, abs(x1 - x2), corridor_width))
-            # Угловой квадрат для соединения
-            self.corridors.append(pygame.Rect(corner_pos[0], corner_pos[1], corridor_width, corridor_width))
+            # Вариант 2: Вертикальный → Горизонтальный
+            if y1 != y2:
+                self.corridors.append(pygame.Rect(x1 - corridor_w // 2, min(y1, y2), corridor_w, abs(y1 - y2) + 1))
+            if x1 != x2:
+                self.corridors.append(pygame.Rect(min(x1, x2), y2 - corridor_w // 2, abs(x1 - x2) + 1, corridor_w))

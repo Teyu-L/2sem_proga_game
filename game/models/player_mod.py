@@ -1,5 +1,5 @@
 import core.settings
-from system.collision import AABB
+from system.collision import TilemapCollision as TilemapCollisionClass
 
 class Player_Model:
     def __init__(self):
@@ -10,8 +10,8 @@ class Player_Model:
         self.attack_speed = 1.0
         self.X = core.settings.WIDTH / 2
         self.Y = core.settings.HEIGHT - 50
-        self.width = 50
-        self.height = 40
+        self.width = 30
+        self.height = 30
 
     def move(self, speedx, speedy):
         self.speedx = speedx
@@ -23,20 +23,33 @@ class Player_Model:
     def drink_elixir(self, elixir):
         pass
 
-    def update(self, dt, obstacles=None):
-        self.X += self.speedx * dt
-        self.Y += self.speedy * dt
+    def update(self, dt, tilemap=None):
+        """
+        Обновляет позицию игрока с проверкой коллизий с тайловой картой.
+        
+        Args:
+            dt: дельта времени (в секундах)
+            tilemap: объект Tilemap_Model для проверки коллизий
+        """
+        # Вычисляем новую позицию
+        new_x = self.X + self.speedx * dt
+        new_y = self.Y + self.speedy * dt
 
-        # Проверка и разрешение коллизий AABB (после каждого движения)
-        if obstacles:
-            player_rect = (self.X - self.width / 2, self.Y - self.height / 2, self.width, self.height)
-            for obs in obstacles:
-                dx, dy = AABB.resolve(player_rect, obs)
-                if dx != 0 or dy != 0:
-                    self.X += dx
-                    self.Y += dy
-                    # Обновляем AABB после сдвига, чтобы корректно обработать следующие препятствия
-                    player_rect = (self.X - self.width / 2, self.Y - self.height / 2, self.width, self.height)
+        # Проверяем коллизии с тайловой картой, если она передана
+        if tilemap:
+            player_rect = (new_x - self.width / 2, new_y - self.height / 2, self.width, self.height)
+            dx, dy = TilemapCollisionClass.resolve_collision(
+                tilemap,
+                (self.X - self.width / 2, self.Y - self.height / 2, self.width, self.height),
+                self.speedx * dt,
+                self.speedy * dt
+            )
+            self.X += dx
+            self.Y += dy
+        else:
+            # Если тайловая карта не передана, просто обновляем позицию
+            self.X = new_x
+            self.Y = new_y
 
     def attack(self):
         pass

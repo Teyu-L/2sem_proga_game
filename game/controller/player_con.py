@@ -6,7 +6,15 @@ class Player_Controller:
         self.model = model
         self.view = view
 
-    def handle_input(self, keys, dt, obstacles=None):
+    def handle_input(self, keys, dt, tilemap=None):
+        """
+        Обрабатывает ввод игрока и обновляет модель.
+        
+        Args:
+            keys: список состояния клавиш (из pygame.key.get_pressed())
+            dt: дельта времени в секундах
+            tilemap: объект Tilemap_Model для проверки коллизий
+        """
         speed = 200
         dx = 0
         dy = 0
@@ -21,7 +29,7 @@ class Player_Controller:
             dx += speed
 
         self.model.move(dx, dy)
-        self.model.update(dt, obstacles)
+        self.model.update(dt, tilemap)
 
         self.view.rect.centerx = self.model.X
         self.view.rect.centery = self.model.Y

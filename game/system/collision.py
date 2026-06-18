@@ -1,3 +1,6 @@
+import core.settings
+
+
 class AABB:
     """
     Реализация алгоритма AABB (Axis-Aligned Bounding Box) для проверки 
@@ -47,3 +50,67 @@ class AABB:
             return 0, -overlap_top
         else:
             return 0, overlap_bottom
+
+
+class TilemapCollision:
+    """
+    Система коллизий на основе тайловой карты.
+    Проверяет, может ли объект занимать определённую позицию.
+    """
+    
+    @staticmethod
+    def check_rect_collision(tilemap, rect):
+        """
+        Проверяет, пересекается ли прямоугольник со стенами на тайловой карте.
+        
+        Args:
+            tilemap: объект Tilemap_Model
+            rect: кортеж (x, y, width, height) в мировых координатах
+        
+        Returns:
+            True если есть столкновение со стеной, False если свободно
+        """
+        x, y, w, h = rect
+        tile_size = core.settings.TILE_SIZE
+        
+        # Получаем координаты тайлов, которые занимает объект
+        min_tile_x = int(x // tile_size)
+        min_tile_y = int(y // tile_size)
+        max_tile_x = int((x + w - 1) // tile_size)
+        max_tile_y = int((y + h - 1) // tile_size)
+        
+        # Проверяем каждый тайл, который занимает объект
+        for tile_y in range(min_tile_y, max_tile_y + 1):
+            for tile_x in range(min_tile_x, max_tile_x + 1):
+                if not tilemap.is_walkable(tile_x, tile_y):
+                    return True  # Есть столкновение
+        
+        return False  # Столкновений нет
+    
+    @staticmethod
+    def resolve_collision(tilemap, rect, dx, dy):
+        """
+        Разрешает коллизию путём перемещения объекта.
+        Проверяет движение по X и Y отдельно.
+        
+        Args:
+            tilemap: объект Tilemap_Model
+            rect: кортеж (x, y, width, height) в мировых координатах
+            dx, dy: смещение, которое нужно применить
+        
+        Returns:
+            кортеж (new_dx, new_dy) - реально применённое смещение
+        """
+        x, y, w, h = rect
+        
+        # Пробуем движение только по X
+        new_rect_x = (x + dx, y, w, h)
+        if TilemapCollision.check_rect_collision(tilemap, new_rect_x):
+            dx = 0
+        
+        # Пробуем движение только по Y
+        new_rect_y = (x + dx, y + dy, w, h)
+        if TilemapCollision.check_rect_collision(tilemap, new_rect_y):
+            dy = 0
+        
+        return dx, dy
