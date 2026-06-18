@@ -1,5 +1,5 @@
 import random
-from controller.bsp import BSPGenerator
+import system.bsp
 import core.settings
 
 class Level_Model:
@@ -17,7 +17,7 @@ class Level_Model:
 
     def generate_level(self, min_room_size, iterations):
         """Инициализирует BSP-генератор и создает структуру уровня."""
-        generator = BSPGenerator(self.map_width, self.map_height, min_room_size, iterations)
+        generator = system.bsp.BSPGenerator(self.map_width, self.map_height, min_room_size, iterations)
         self.rooms, self.corridors = generator.generate()
 
     def get_random_room(self):

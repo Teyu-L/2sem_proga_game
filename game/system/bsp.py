@@ -97,14 +97,28 @@ class BSPGenerator:
             return room
 
     def _create_corridor(self, room1, room2):
-        """Создает Г-образные коридоры, соединяющие центры двух комнат."""
+        """Создает аккуратные Г-образные коридоры из трех частей (2 отрезка и 1 угловой квадрат)."""
         x1, y1 = room1.center
         x2, y2 = room2.center
         corridor_width = 30 # Ширина коридора (можно настроить в зависимости от размера спрайта игрока)
 
         if random.choice([True, False]):
-            self.corridors.append(pygame.Rect(min(x1, x2), y1, abs(x1 - x2) + corridor_width, corridor_width))
-            self.corridors.append(pygame.Rect(x2, min(y1, y2), corridor_width, abs(y1 - y2) + corridor_width))
+            # Горизонтальный, потом вертикальный. Поворот в (x2, y1).
+            corner_pos = (x2 - corridor_width // 2, y1 - corridor_width // 2)
+            
+            # Горизонтальный отрезок
+            self.corridors.append(pygame.Rect(min(x1, x2), y1 - corridor_width // 2, abs(x1 - x2), corridor_width))
+            # Вертикальный отрезок
+            self.corridors.append(pygame.Rect(x2 - corridor_width // 2, min(y1, y2), corridor_width, abs(y1 - y2)))
+            # Угловой квадрат для соединения
+            self.corridors.append(pygame.Rect(corner_pos[0], corner_pos[1], corridor_width, corridor_width))
         else:
-            self.corridors.append(pygame.Rect(x1, min(y1, y2), corridor_width, abs(y1 - y2) + corridor_width))
-            self.corridors.append(pygame.Rect(min(x1, x2), y2, abs(x1 - x2) + corridor_width, corridor_width))
+            # Вертикальный, потом горизонтальный. Поворот в (x1, y2).
+            corner_pos = (x1 - corridor_width // 2, y2 - corridor_width // 2)
+
+            # Вертикальный отрезок
+            self.corridors.append(pygame.Rect(x1 - corridor_width // 2, min(y1, y2), corridor_width, abs(y1 - y2)))
+            # Горизонтальный отрезок
+            self.corridors.append(pygame.Rect(min(x1, x2), y2 - corridor_width // 2, abs(x1 - x2), corridor_width))
+            # Угловой квадрат для соединения
+            self.corridors.append(pygame.Rect(corner_pos[0], corner_pos[1], corridor_width, corridor_width))

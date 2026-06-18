@@ -1,5 +1,5 @@
 import core.settings
-from systems.collision import AABB
+from system.collision import AABB
 
 class Player_Model:
     def __init__(self):
@@ -27,16 +27,6 @@ class Player_Model:
         self.X += self.speedx * dt
         self.Y += self.speedy * dt
 
-        if self.X < 0:
-            self.X = 0
-        elif self.X > core.settings.WIDTH:
-            self.X = core.settings.WIDTH
-
-        if self.Y < 0:
-            self.Y = 0
-        elif self.Y > core.settings.HEIGHT:
-            self.Y = core.settings.HEIGHT
-            
         # Проверка и разрешение коллизий AABB (после каждого движения)
         if obstacles:
             player_rect = (self.X - self.width / 2, self.Y - self.height / 2, self.width, self.height)
