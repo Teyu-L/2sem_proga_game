@@ -1,10 +1,10 @@
 import pygame
-import sys
 from models.level_mod import Level_Model
 from views.level import Level_View
 from models.player_mod import Player_Model
 from views.player import Player_View
-from controller.player_con import Player_Controller
+from controller.player_controller import PlayerController
+from models.combat_state import CombatState
 from core.camera import Camera
 
 # Пытаемся взять настройки окна, иначе задаем по умолчанию
@@ -32,7 +32,8 @@ def main():
     player_model.X, player_model.Y = spawn_pos
 
     player_view = Player_View(player_model.X, player_model.Y)
-    player_controller = Player_Controller(player_model, player_view)
+    combat_state = CombatState()
+    player_controller = PlayerController(player_model, player_view, level_model.tilemap)
 
     # 3. Инициализируем камеру
     camera = Camera(width=WIDTH, height=HEIGHT)
@@ -47,7 +48,8 @@ def main():
     while running:
         dt = clock.tick(60) / 1000.0
 
-        for event in pygame.event.get():
+        events = pygame.event.get()
+        for event in events:
             if event.type == pygame.QUIT:
                 running = False
             # Для отладки: нажми G чтобы включить/отключить сетку
@@ -56,8 +58,8 @@ def main():
 
         keys = pygame.key.get_pressed()
 
-        # Обновление логики с проверкой коллизий на тайловой карте
-        player_controller.handle_input(keys, dt, level_model.tilemap)
+        # Обновление логики игрока через новый контроллер и ввод
+        player_controller.update(dt, events, keys, combat_state)
 
         # Обновление камеры (плавно догоняет игрока)
         camera.update(player_model.X, player_model.Y, level_model.map_width, level_model.map_height)

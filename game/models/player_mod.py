@@ -1,5 +1,5 @@
-import core.settings
-from system.collision import TilemapCollision as TilemapCollisionClass
+import core.settings 
+from system.collision import AABB, resolve_tilemap_collision
 
 class Player_Model:
     def __init__(self):
@@ -31,25 +31,18 @@ class Player_Model:
             dt: дельта времени (в секундах)
             tilemap: объект Tilemap_Model для проверки коллизий
         """
-        # Вычисляем новую позицию
-        new_x = self.X + self.speedx * dt
-        new_y = self.Y + self.speedy * dt
+        # Вычисляем предложенное движение
+        dx = self.speedx * dt
+        dy = self.speedy * dt
 
-        # Проверяем коллизии с тайловой картой, если она передана
         if tilemap:
-            player_rect = (new_x - self.width / 2, new_y - self.height / 2, self.width, self.height)
-            dx, dy = TilemapCollisionClass.resolve_collision(
-                tilemap,
-                (self.X - self.width / 2, self.Y - self.height / 2, self.width, self.height),
-                self.speedx * dt,
-                self.speedy * dt
-            )
+            rect = (self.X - self.width / 2, self.Y - self.height / 2, self.width, self.height)
+            dx, dy = resolve_tilemap_collision(tilemap, rect, dx, dy)
             self.X += dx
             self.Y += dy
         else:
-            # Если тайловая карта не передана, просто обновляем позицию
-            self.X = new_x
-            self.Y = new_y
+            self.X += dx
+            self.Y += dy
 
     def attack(self):
         pass

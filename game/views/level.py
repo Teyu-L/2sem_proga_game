@@ -1,5 +1,5 @@
 import pygame
-from views.tilemap import Tilemap_View as TilemapViewClass
+from .tilemap import Tilemap_View as TilemapViewClass
 
 class Level_View:
     """

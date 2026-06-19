@@ -1,7 +1,7 @@
 import random
 from system import bsp as system_bsp
 from system import tilemap_generator as tilemap_gen
-import core.settings
+import core
 from models.tilemap_mod import Tilemap_Model
 
 class Level_Model:

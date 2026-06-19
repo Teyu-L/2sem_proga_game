@@ -3,7 +3,7 @@ import pygame
 class Player_View(pygame.sprite.Sprite):
     def __init__(self, start_x, start_y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((50, 40))
+        self.image = pygame.Surface((40, 40))
         self.image.fill((0, 200, 0)) # Зеленый цвет для игрока
         
         self.rect = self.image.get_rect()

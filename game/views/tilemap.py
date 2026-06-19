@@ -24,7 +24,7 @@ class Tilemap_View:
         self.tile_colors = {
             core.settings.TILE_EMPTY: (30, 30, 30),      # Темно-серый - стены
             core.settings.TILE_FLOOR: (60, 60, 60),      # Серый - пол комнаты
-            core.settings.TILE_CORRIDOR: (50, 50, 50),   # Темно-серый - коридор
+            core.settings.TILE_CORRIDOR: (60, 60, 60),   # Темно-серый - коридор
         }
         
         # Цвет границ тайлов (для отладки, можно отключить)

@@ -52,65 +52,50 @@ class AABB:
             return 0, overlap_bottom
 
 
-class TilemapCollision:
+def get_tile_rects_for_rect(tilemap, rect):
     """
-    Система коллизий на основе тайловой карты.
-    Проверяет, может ли объект занимать определённую позицию.
+    Возвращает список прямоугольников, соответствующих непроходимым тайлам,
+    которые пересекаются с областью rect.
     """
-    
-    @staticmethod
-    def check_rect_collision(tilemap, rect):
-        """
-        Проверяет, пересекается ли прямоугольник со стенами на тайловой карте.
-        
-        Args:
-            tilemap: объект Tilemap_Model
-            rect: кортеж (x, y, width, height) в мировых координатах
-        
-        Returns:
-            True если есть столкновение со стеной, False если свободно
-        """
-        x, y, w, h = rect
-        tile_size = core.settings.TILE_SIZE
-        
-        # Получаем координаты тайлов, которые занимает объект
-        min_tile_x = int(x // tile_size)
-        min_tile_y = int(y // tile_size)
-        max_tile_x = int((x + w - 1) // tile_size)
-        max_tile_y = int((y + h - 1) // tile_size)
-        
-        # Проверяем каждый тайл, который занимает объект
-        for tile_y in range(min_tile_y, max_tile_y + 1):
-            for tile_x in range(min_tile_x, max_tile_x + 1):
-                if not tilemap.is_walkable(tile_x, tile_y):
-                    return True  # Есть столкновение
-        
-        return False  # Столкновений нет
-    
-    @staticmethod
-    def resolve_collision(tilemap, rect, dx, dy):
-        """
-        Разрешает коллизию путём перемещения объекта.
-        Проверяет движение по X и Y отдельно.
-        
-        Args:
-            tilemap: объект Tilemap_Model
-            rect: кортеж (x, y, width, height) в мировых координатах
-            dx, dy: смещение, которое нужно применить
-        
-        Returns:
-            кортеж (new_dx, new_dy) - реально применённое смещение
-        """
-        x, y, w, h = rect
-        
-        # Пробуем движение только по X
+    x, y, w, h = rect
+    tile_size = core.settings.TILE_SIZE
+
+    min_tile_x = int((x - tile_size) // tile_size)
+    min_tile_y = int((y - tile_size) // tile_size)
+    max_tile_x = int((x + w + tile_size - 1) // tile_size)
+    max_tile_y = int((y + h + tile_size - 1) // tile_size)
+
+    obstacles = []
+    for tile_y in range(min_tile_y, max_tile_y + 1):
+        for tile_x in range(min_tile_x, max_tile_x + 1):
+            if not tilemap.is_walkable(tile_x, tile_y):
+                if 0 <= tile_x < tilemap.grid_width and 0 <= tile_y < tilemap.grid_height:
+                    obstacles.append((tile_x * tile_size,
+                                      tile_y * tile_size,
+                                      tile_size,
+                                      tile_size))
+    return obstacles
+
+
+def resolve_tilemap_collision(tilemap, rect, dx, dy):
+    """
+    Разрешает столкновение объекта с непроходимыми тайлами тайловой карты.
+    Использует AABB для разрешения движения по X и Y отдельно.
+    """
+    x, y, w, h = rect
+
+    if dx != 0:
         new_rect_x = (x + dx, y, w, h)
-        if TilemapCollision.check_rect_collision(tilemap, new_rect_x):
-            dx = 0
-        
-        # Пробуем движение только по Y
+        for obstacle in get_tile_rects_for_rect(tilemap, new_rect_x):
+            if AABB.check(new_rect_x, obstacle):
+                dx = 0
+                break
+
+    if dy != 0:
         new_rect_y = (x + dx, y + dy, w, h)
-        if TilemapCollision.check_rect_collision(tilemap, new_rect_y):
-            dy = 0
-        
-        return dx, dy
+        for obstacle in get_tile_rects_for_rect(tilemap, new_rect_y):
+            if AABB.check(new_rect_y, obstacle):
+                dy = 0
+                break
+
+    return dx, dy
